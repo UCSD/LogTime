@@ -32,18 +32,19 @@ def parse_time(time_str):
         print("Error: Invalid time specifier. Use 'm' for minutes or 'h' for hours.")
         sys.exit(1)
 
-def log_time(issue_id, time_spent):
+def log_time(issue_id, time_spent, description=''):
     """
     Logs the specified time to an ITS PRO issue by making a POST request to the ITS PRO worklog API.
 
     Converts `time_spent` to seconds based on whether it's in hours or minutes, calculates the start time in UTC
-    using timezone-aware datetime objects, and sends the data along with an empty comment to the specified ITS PRO issue.
-    Handles different response codes, printing appropriate success or error messages, and exits on failure.
+    using timezone-aware datetime objects, and sends the data along with a comment to the specified ITS PRO issue.
+    Appends ' (Created by Log Time CLI)' to the user's description or uses it as the comment if description is empty.
 
     Args:
     issue_id (str): ITS PRO issue ID to log time to.
     time_spent (str): Time spent in hours or minutes (e.g., '2', '2h', '30', '30m').
                       If no unit is provided, values ≤ 8 are assumed to be hours, and values > 8 are assumed to be minutes.
+    description (str): Optional description provided by the user.
     """
     # Parse the time and convert it to seconds
     time_seconds = parse_time(time_spent)
@@ -51,14 +52,17 @@ def log_time(issue_id, time_spent):
     # Calculate the start time using a timezone-aware datetime object in UTC
     start_time = datetime.now(timezone.utc) - timedelta(seconds=time_seconds)
 
+    # Prepare the comment with additional text
+    full_comment = f"{description} (Created by Log Time CLI)" if description else "(Created by Log Time CLI)"
+
     # Construct the API URL for logging time to the specified ITS PRO issue
     url = f"https://{ITS_PRO_DOMAIN}/rest/api/2/issue/{issue_id}/worklog"
 
     # Construct the API request payload
     payload = {
         'timeSpentSeconds': time_seconds,
-        'started': start_time.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + '+0000',  # UTC timezone-aware
-        'comment': ''  # Empty comment field added
+        'started': start_time.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + '+0000',
+        'comment': full_comment
     }
 
     # Make the API request
@@ -92,22 +96,24 @@ def main():
     parser = argparse.ArgumentParser(description='Log time to ITS PRO', add_help=False)  # Removed default help option
     parser.add_argument('issue_id', type=str, nargs='?', help='ITS PRO issue ID to which time will be logged')
     parser.add_argument('time_spent', type=str, nargs='?', help='Amount of time spent (e.g., 30, 30m, 2, 2h)')
+    parser.add_argument('description', type=str, nargs='?', default='', help='Description of the work done (optional)')
     
     # Parse the arguments
     args = parser.parse_args()
 
-    # If arguments are missing or bad, print friendly error and usage
+    # If arguments are missing, print friendly error and usage
     if not args.issue_id or not args.time_spent:
         print("Error: Missing required parameters.")
-        print("Usage: lt [ITS PRO Issue ID] [Time Spent] (Make sure the 'lt' alias is set up as described in the README.)")
+        print("Usage: lt [ITS PRO Issue ID] [Time Spent] [Description]")
         print("\nLog time to ITS PRO using the 'lt' command:")
         print("\nParameters:")
         print("  ITS PRO Issue ID    The ITS PRO issue ID to log time to (e.g., SVCOPS-619)")
         print("  Time Spent          Amount of time spent (e.g., 30, 30m, 2, 2h)")
+        print("  Description         Description of the work done (optional)")
         sys.exit(1)
 
     # Call the function to log time
-    log_time(args.issue_id, args.time_spent)
+    log_time(args.issue_id, args.time_spent, args.description)
 
 if __name__ == "__main__":
     main()
