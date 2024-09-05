@@ -61,8 +61,8 @@ For example:
 lt SVCOPS-407 30 "Completed initial setup"
 ```
 This command logs 30 minutes to ITS PRO issue `SVCOPS-407`.
-- `<your-issue-id>`: Your ITS PRO issue ID (e.g., `SVCOPS-407`).
-- `<time-spent>`: Time spent (e.g., 30 or 30m for 30 minutes; 2 or 2h for 2 hours).
-- ["Description"]: An optional description that details the work related to the time logged.
+- `<ITS PRO Issue ID`: Your ITS PRO issue ID (e.g., `SVCOPS-407`).
+- `<Time Spent>`: Time spent working on the issue (e.g., 30 or 30m for 30 minutes; 2 or 2h for 2 hours).
+- `["Description"]`: An optional description that details the work related to the time logged.
 ## License
 	MIT
