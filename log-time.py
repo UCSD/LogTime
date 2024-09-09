@@ -32,7 +32,14 @@ def parse_time(time_str):
         print("Error: Invalid time specifier. Use 'm' for minutes or 'h' for hours.")
         sys.exit(1)
 
-def log_time(issue_id, time_spent, description=''):
+def parse_description(description):
+    """Parse the description and extract days offset if provided as a number."""
+    match = re.match(r'^(-?\d+)$', description)
+    if match:
+        return -int(match.group()), ''
+    return 0, description
+
+def log_time(issue_id, time_spent, description, days_offset):
     """
     Logs the specified time to an ITS PRO issue by making a POST request to the ITS PRO worklog API.
 
@@ -50,7 +57,7 @@ def log_time(issue_id, time_spent, description=''):
     time_seconds = parse_time(time_spent)
 
     # Calculate the start time using a timezone-aware datetime object in UTC
-    start_time = datetime.now(timezone.utc) - timedelta(seconds=time_seconds)
+    start_time = datetime.now(timezone.utc) - timedelta(days=days_offset, seconds=time_seconds)
 
     # Prepare the comment with additional text
     full_comment = f"{description} (Created by Log Time CLI)" if description else "(Created by Log Time CLI)"
@@ -96,7 +103,7 @@ def main():
     parser = argparse.ArgumentParser(description='Log time to ITS PRO', add_help=False)  # Removed default help option
     parser.add_argument('issue_id', type=str, nargs='?', help='ITS PRO issue ID to which time will be logged')
     parser.add_argument('time_spent', type=str, nargs='?', help='Amount of time spent (e.g., 30, 30m, 2, 2h)')
-    parser.add_argument('description', type=str, nargs='?', default='', help='Description of the work done (optional)')
+    parser.add_argument('description', type=str, nargs='?', default='', help='Description of the work done or days offset (optional)')
     
     # Parse the arguments
     args = parser.parse_args()
@@ -109,11 +116,12 @@ def main():
         print("\nParameters:")
         print("  ITS PRO Issue ID    The ITS PRO issue ID to log time to (e.g., SVCOPS-619)")
         print("  Time Spent          Amount of time spent (e.g., 30, 30m, 2, 2h)")
-        print("  Description         Description of the work done (optional)")
+        print("  Description         Description of the work done or days offset (optional)")
         sys.exit(1)
 
     # Call the function to log time
-    log_time(args.issue_id, args.time_spent, args.description)
+    days_offset, description = parse_description(args.description)
+    log_time(args.issue_id, args.time_spent, description, days_offset)
 
 if __name__ == "__main__":
     main()
