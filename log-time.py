@@ -18,12 +18,12 @@ ITS_PRO_ACCESS_TOKEN = os.getenv('ITS_PRO_ACCESS_TOKEN')
 
 def parse_time(time_str):
     """Parse the input time and convert it to seconds, assuming hours if ≤ 8 else minutes."""
-    match = re.match(r'^(\d+)(m|h)?$', time_str)
+    match = re.match(r'^(\d+(?:\.\d+)?)(m|h)?$', time_str)
     if not match:
         print("Error: Invalid time format. Time should be a number optionally followed by 'm' or 'h'.")
         sys.exit(1)
     amount, unit = match.groups()
-    amount = int(amount)
+    amount = float(amount)
     if unit == 'h' or (unit is None and amount <= 8):
         return amount * 3600  # Convert hours to seconds
     elif unit == 'm' or (unit is None and amount > 8):
